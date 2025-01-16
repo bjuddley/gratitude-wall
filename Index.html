@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What are you grateful for?</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        header {
+            background-color: #7E5A9B;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        input[type="text"] {
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #7E5A9B;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #5E4073;
+        }
+        .filters {
+            margin: 16px 0 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .filters button {
+            background-color: #ddd;
+            color: #333;
+            border: 1px solid #ccc;
+            padding: 8px 16px;
+            font-size: 14px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        .filters button:hover {
+            background-color: #bbb;
+        }
+        .timeline {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #ddd;
+        }
+        .entry {
+            background: #f9f9f9;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>What are you grateful for?</h1>
+        <p>Share what you're grateful for and see what others have shared!</p>
+    </header>
+    <div class="container">
+        <form id="gratitudeForm">
+            <input type="text" id="gratitudeInput" placeholder="I am grateful for..." required>
+            <input type="text" id="nameInput" placeholder="Your name (optional)">
+            <button type="submit">Submit</button>
+        </form>
+        <div class="filters">
+            <button onclick="filterEntries('today')">Today</button>
+            <button onclick="filterEntries('thisWeek')">This Week</button>
+            <button onclick="filterEntries('lastWeek')">Last Week</button>
+            <button onclick="filterEntries('allTime')">All Time</button>
+        </div>
+        <div class="timeline" id="timeline"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('gratitudeForm');
+        const input = document.getElementById('gratitudeInput');
+        const nameInput = document.getElementById('nameInput');
+        const timeline = document.getElementById('timeline');
+
+        let entries = [];
+
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            const text = input.value.trim();
+            const name = nameInput.value.trim();
+
+            if (text) {
+                entries.unshift({ text, name, timestamp: new Date() });
+                updateTimeline();
+                input.value = '';
+                nameInput.value = '';
+            }
+        });
+
+        function updateTimeline(filteredEntries = entries) {
+            timeline.innerHTML = filteredEntries.map(entry => `
+                <div class="entry">
+                    <p>${entry.text}</p>
+                    ${entry.name ? `<p><strong>- ${entry.name}</strong></p>` : ''}
+                    <small>${new Date(entry.timestamp).toLocaleString()}</small>
+                </div>
+            `).join('');
+        }
+
+        function filterEntries(filter) {
+            const now = new Date();
+            let filteredEntries;
+
+            if (filter === 'today') {
+                filteredEntries = entries.filter(entry => {
+                    const entryDate = new Date(entry.timestamp);
+                    return entryDate.toDateString() === now.toDateString();
+                });
+            } else if (filter === 'thisWeek') {
+                const startOfWeek = new Date(now);
+                startOfWeek.setDate(now.getDate() - now.getDay());
+                filteredEntries = entries.filter(entry => new Date(entry.timestamp) >= startOfWeek);
+            } else if (filter === 'lastWeek') {
+                const startOfLastWeek = new Date(now);
+                startOfLastWeek.setDate(now.getDate() - now.getDay() - 7);
+                const endOfLastWeek = new Date(startOfLastWeek);
+                endOfLastWeek.setDate(startOfLastWeek.getDate() + 6);
+                filteredEntries = entries.filter(entry => {
+                    const entryDate = new Date(entry.timestamp);
+                    return entryDate >= startOfLastWeek && entryDate <= endOfLastWeek;
+                });
+            } else {
+                filteredEntries = entries; // Default to all time
+            }
+
+            updateTimeline(filteredEntries);
+        }
+    </script>
+</body>
+</html>
