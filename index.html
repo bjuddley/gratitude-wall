@@ -102,39 +102,60 @@
         <div class="timeline" id="timeline"></div>
     </div>
 
-    <script>
+    <script type="module">
+        // Import Firebase libraries
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCD53SPchXY4eV4G4sF9qtY8jiRRc--BP0",
+            authDomain: "gratitude-wall-6928c.firebaseapp.com",
+            projectId: "gratitude-wall-6928c",
+            storageBucket: "gratitude-wall-6928c.firebasestorage.app",
+            messagingSenderId: "385841665735",
+            appId: "1:385841665735:web:863ac0a4ec073815cf10e2"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
         const form = document.getElementById('gratitudeForm');
         const input = document.getElementById('gratitudeInput');
         const nameInput = document.getElementById('nameInput');
         const timeline = document.getElementById('timeline');
 
-        // Load saved entries from localStorage
-        let entries = JSON.parse(localStorage.getItem('gratitudeEntries')) || [];
+        // Fetch entries from Firestore
+        async function fetchEntries() {
+            const entriesRef = collection(db, "entries");
+            const q = query(entriesRef, orderBy("timestamp", "desc"));
+            const querySnapshot = await getDocs(q);
 
-        // Update the timeline on page load
-        updateTimeline();
+            const entries = querySnapshot.docs.map(doc => doc.data());
+            updateTimeline(entries);
+        }
 
-        form.addEventListener('submit', (event) => {
+        // Submit a new entry
+        form.addEventListener('submit', async (event) => {
             event.preventDefault();
 
             const text = input.value.trim();
             const name = nameInput.value.trim();
 
             if (text) {
-                const newEntry = { text, name, timestamp: new Date() };
-                entries.unshift(newEntry);
+                const newEntry = { text, name, timestamp: new Date().toISOString() };
+                await addDoc(collection(db, "entries"), newEntry);
 
-                // Save updated entries to localStorage
-                localStorage.setItem('gratitudeEntries', JSON.stringify(entries));
-
-                updateTimeline();
+                fetchEntries();
                 input.value = '';
                 nameInput.value = '';
             }
         });
 
-        function updateTimeline(filteredEntries = entries) {
-            timeline.innerHTML = filteredEntries.map(entry => `
+        // Update the timeline
+        function updateTimeline(entries) {
+            timeline.innerHTML = entries.map(entry => `
                 <div class="entry">
                     <p>${entry.text}</p>
                     ${entry.name ? `<p><strong>- ${entry.name}</strong></p>` : ''}
@@ -143,34 +164,8 @@
             `).join('');
         }
 
-        function filterEntries(filter) {
-            const now = new Date();
-            let filteredEntries;
-
-            if (filter === 'today') {
-                filteredEntries = entries.filter(entry => {
-                    const entryDate = new Date(entry.timestamp);
-                    return entryDate.toDateString() === now.toDateString();
-                });
-            } else if (filter === 'thisWeek') {
-                const startOfWeek = new Date(now);
-                startOfWeek.setDate(now.getDate() - now.getDay());
-                filteredEntries = entries.filter(entry => new Date(entry.timestamp) >= startOfWeek);
-            } else if (filter === 'lastWeek') {
-                const startOfLastWeek = new Date(now);
-                startOfLastWeek.setDate(now.getDate() - now.getDay() - 7);
-                const endOfLastWeek = new Date(startOfLastWeek);
-                endOfLastWeek.setDate(startOfLastWeek.getDate() + 6);
-                filteredEntries = entries.filter(entry => {
-                    const entryDate = new Date(entry.timestamp);
-                    return entryDate >= startOfLastWeek && entryDate <= endOfLastWeek;
-                });
-            } else {
-                filteredEntries = entries; // Default to all time
-            }
-
-            updateTimeline(filteredEntries);
-        }
+        // Load initial entries
+        fetchEntries();
     </script>
 </body>
 </html>
