@@ -84,7 +84,7 @@
 </head>
 <body>
     <header>
-        <h1>What are you grateful for??</h1>
+        <h1>What are you grateful for?</h1>
         <p>Share what you're grateful for and see what others have shared!</p>
     </header>
     <div class="container">
@@ -108,7 +108,11 @@
         const nameInput = document.getElementById('nameInput');
         const timeline = document.getElementById('timeline');
 
-        let entries = [];
+        // Load saved entries from localStorage
+        let entries = JSON.parse(localStorage.getItem('gratitudeEntries')) || [];
+
+        // Update the timeline on page load
+        updateTimeline();
 
         form.addEventListener('submit', (event) => {
             event.preventDefault();
@@ -117,7 +121,12 @@
             const name = nameInput.value.trim();
 
             if (text) {
-                entries.unshift({ text, name, timestamp: new Date() });
+                const newEntry = { text, name, timestamp: new Date() };
+                entries.unshift(newEntry);
+
+                // Save updated entries to localStorage
+                localStorage.setItem('gratitudeEntries', JSON.stringify(entries));
+
                 updateTimeline();
                 input.value = '';
                 nameInput.value = '';
